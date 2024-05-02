@@ -24,7 +24,11 @@ const styles = theme => ({
     },
     port: {
         marginRight: theme.spacing(1),
-        width: 200,
+        width: 100,
+    },
+    angle: {
+        marginRight: theme.spacing(1),
+        width: 100,
     },
     protocol: {
         width: 70,
@@ -86,6 +90,7 @@ class RTSPImageConfig extends Component {
         // set default values
         state.ip       = state.ip || '';
         state.port     = state.port || '554';
+        state.angle    = state.angle || '';
         state.urlPath  = state.urlPath || '';
         state.password = state.password || '';
         state.username = state.username === undefined ? 'admin' : (state.username || '');
@@ -115,6 +120,7 @@ class RTSPImageConfig extends Component {
                 username: this.state.username,
                 password,
                 port:     this.state.port,
+                angle:  this.state.angle,
                 urlPath:  this.state.urlPath,
                 prefix:   this.state.prefix,
                 suffix:   this.state.suffix,
@@ -128,6 +134,7 @@ class RTSPImageConfig extends Component {
     buildCommand(options) {
         const parameters = ['-y'];
         options.prefix && parameters.push(options.prefix);
+
         parameters.push('-rtsp_transport');
         parameters.push(options.protocol || 'udp');
         parameters.push('-i');
@@ -140,7 +147,7 @@ class RTSPImageConfig extends Component {
         parameters.push('-vframes');
         parameters.push('1');
         options.suffix && parameters.push(options.suffix);
-        parameters.push(`${this.props.native.tempPath ? `${this.props.native.tempPath}/` : ''}${options.ip.replace(/[.:]/g, '_')}.jpg`);
+        parameters.push(`${this.props.native.tempPath ? `${this.props.native.tempPath}/` : ''}${options.ip.replace(/[.:]/g, '_')}_${options.port}.jpg`);
         return parameters;
     }
 
@@ -162,6 +169,14 @@ class RTSPImageConfig extends Component {
                     value={this.state.port}
                     onChange={e => this.setState({ port: e.target.value }, () => this.reportSettings())}
                 />
+                <TextField
+                    variant="standard"
+                    className={this.props.classes.angle}
+                    type="number"
+                    label={I18n.t('Angle')}
+                    value={this.state.angle}
+                    onChange={e => this.setState({ angle: Number(e.target.value) }, () => this.reportSettings())}
+                /> 
                 <FormControl className={this.props.classes.protocol} variant="standart">
                     <InputLabel>{I18n.t('Protocol')}</InputLabel>
                     <Select

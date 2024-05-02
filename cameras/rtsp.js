@@ -142,11 +142,11 @@ function process(adapter, cam) {
         });
     }
 
-    const outputFileName = path.normalize(`${adapter.config.tempPath}/${cam.ip.replace(/[.:]/g, '_')}.jpg`);
+    const outputFileName = path.normalize(`${adapter.config.tempPath}/${cam.ip.replace(/[.:]/g, '_')}_${cam.port}.jpg`);
     cam.runningRequest = getRtspSnapshot(adapter.config.ffmpegPath, cam, outputFileName, adapter)
         .then(async body => {
             cam.runningRequest = null;
-            adapter.log.debug(`Snapshot from ${cam.ip}. Done!`);
+            adapter.log.debug(`Snapshot from ${cam.ip}_${cam.port}. Done!`);
 
             if (!ratio[cam.name]) {
                 // try to get width and height
@@ -155,10 +155,18 @@ function process(adapter, cam) {
                 ratio[cam.name] = metadata.width / metadata.height;
             }
 
-            return {
-                body,
-                contentType: 'image/jpeg',
-            };
+            if (!cam.angle)  {
+                return adapter._sharp(body)
+                    .jpeg()
+                    .toBuffer()
+                    .then(body =>({ body, contentType: 'image/jpeg' }));
+            }  else {
+                return adapter._sharp(body)
+                    .rotate(cam.angle)
+                    .jpeg()
+                    .toBuffer()
+                    .then(body => ({ body, contentType: 'image/jpeg' }));
+            }
         });
 
     return cam.runningRequest;
@@ -228,14 +236,14 @@ async function webStreaming(adapter, camera, options, fromState) {
             if (!ratio[camera]) {
                 const cameraObject = adapter.config.cameras.find(c => c.name === camera);
 
-                const outputFileName = path.normalize(`${adapter.config.tempPath}/${cameraObject.ip.replace(/[.:]/g, '_')}.jpg`);
+                const outputFileName = path.normalize(`${adapter.config.tempPath}/${cameraObject.ip.replace(/[.:]/g, '_')}_${cameraObject.port}.jpg`);
                 const body = await getRtspSnapshot(adapter.config.ffmpegPath, cameraObject, outputFileName, adapter);
                 // try to get width and height
                 const image = await adapter._sharp(body);
                 const metadata = await image.metadata();
                 ratio[camera] = metadata.width / metadata.height;
             }
-            command.addOptions(`-vf scale=${options.width}:${Math.round(options.width / ratio[camera])}`);
+            command.addOptions(`-scale=${options.width}:${Math.round(options.width / ratio[camera])}`);
         }
 
         command.on('end', function () {

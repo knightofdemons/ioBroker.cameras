@@ -9,6 +9,8 @@ import { Close } from '@mui/icons-material';
 
 import Generic from './Generic';
 import { CameraField } from './RtspCamera';
+import { angle } from '../../src/src/Types/RTSPImage';
+const camAngle = angle();
 
 const styles = () => ({
     camera: {
@@ -243,6 +245,7 @@ class SnapshotCamera extends Generic {
                         ref={this.fullVideoRef}
                         className={this.props.classes.fullCamera}
                         alt={this.state.rxData.camera}
+                        style={`transform: rotate(${camAngle}deg);`}
                     />
                 </div>
             </DialogContent>
